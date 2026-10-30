@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ofrenda: a remembrance that never leaves your machine</title>
+<style>
+:root{--night:#1a1030;--deep:#2a1a4a;--marigold:#f2a516;--candle:#ffe2a8;--rose:#d63a78;--teal:#3fb6a8;--ink:#f5ecff;--mute:#b9a9d6;
+--serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--night);color:var(--ink);font:18px/1.6 var(--serif)}
+main{max-width:920px;margin:0 auto;padding:2rem 1.2rem 4rem}
+h1{font-size:clamp(2rem,6vw,3.4rem);line-height:1.1;margin:.2em 0 .3em;font-weight:600}
+.lede{color:var(--mute);max-width:56ch;margin:0 0 2rem}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:2rem}
+@media(max-width:760px){.grid{grid-template-columns:1fr}}
+label{display:block;margin:0 0 1rem;color:var(--candle)}
+input,textarea,select{width:100%;margin-top:.3rem;padding:.6rem .7rem;background:var(--deep);color:var(--ink);border:1px solid #4b3a78;border-radius:6px;font:inherit}
+textarea{min-height:5.5rem;resize:vertical}
+:focus-visible{outline:3px solid var(--marigold);outline-offset:2px}
+button{font:inherit;padding:.7rem 1.2rem;border-radius:6px;border:0;background:var(--marigold);color:#2a1700;cursor:pointer;font-weight:700}
+button.ghost{background:transparent;color:var(--candle);border:1px solid #6b57a0}
+button:disabled{opacity:.5;cursor:wait}
+.row{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center}
+#status{font-size:.9rem;color:var(--mute);margin:.4rem 0 1.2rem}
+#status.bad{color:#ff9db8}
+/* the altar */
+.altar{margin-top:2.5rem;border-top:1px solid #4b3a78;padding-top:1.5rem}
+.tiers{display:flex;flex-direction:column;align-items:center;gap:0}
+.tier{background:var(--deep);border:1px solid #4b3a78;padding:.8rem 1rem;text-align:center;min-height:3.2rem}
+.t1{width:46%}.t2{width:72%}.t3{width:98%}
+.flame{display:inline-block;width:14px;height:22px;background:radial-gradient(ellipse at 50% 70%,#fff3c4,var(--marigold) 60%,transparent 72%);border-radius:50% 50% 50% 50%/60% 60% 40% 40%;opacity:.25;transition:opacity 1.2s}
+.lit .flame{opacity:1;animation:flick 2.4s ease-in-out infinite}
+@keyframes flick{50%{transform:scale(1.08,.94) rotate(-2deg)}}
+@media(prefers-reduced-motion:reduce){.lit .flame{animation:none}}
+.chip{display:inline-block;margin:.15rem;padding:.1rem .6rem;border-radius:99px;background:#3b2a66;font-size:.9rem}
+.papel{height:14px;margin:0 0 .6rem;background:repeating-linear-gradient(90deg,var(--rose) 0 28px,var(--teal) 28px 56px,var(--marigold) 56px 84px);clip-path:polygon(0 0,100% 0,100% 55%,96% 100%,92% 55%,88% 100%,84% 55%,80% 100%,76% 55%,72% 100%,68% 55%,64% 100%,60% 55%,56% 100%,52% 55%,48% 100%,44% 55%,40% 100%,36% 55%,32% 100%,28% 55%,24% 100%,20% 55%,16% 100%,12% 55%,8% 100%,4% 55%,0 100%)}
+#out{white-space:pre-wrap;margin-top:1.5rem;padding:1.4rem;background:#22143e;border-left:4px solid var(--marigold);min-height:3rem}
+small{color:var(--mute)}
+code{background:#33225a;padding:.05em .35em;border-radius:4px}
+</style>
+</head>
+<body>
+<main>
+<h1>Ofrenda</h1>
+<p class="lede">Tell it about someone you miss. A model running on this computer helps you write a remembrance, using only what you give it. Nothing is uploaded; the page talks to <code>localhost</code> and nowhere else.</p>
+
+<div class="row">
+  <label style="margin:0;flex:1;min-width:220px">Model on your machine
+    <select id="model"><option>checking for Ollama…</option></select></label>
+  <button class="ghost" id="recheck" type="button">Check again</button>
+</div>
+<div id="status" role="status" aria-live="polite"></div>
+
+<div class="grid">
+  <div>
+    <label>Their name<input id="name" autocomplete="off" placeholder="Nani, Tío Beto, Grandpa Joe…"></label>
+    <label>Who they were to you<input id="rel" autocomplete="off" placeholder="my grandmother"></label>
+    <label>Foods they loved (comma separated)<input id="foods" placeholder="mole, pan dulce, black coffee"></label>
+    <label>Songs or sounds<input id="songs" placeholder="Bésame Mucho, the screen door"></label>
+  </div>
+  <div>
+    <label>A memory, in your own words<textarea id="story" placeholder="She hummed while she peeled oranges and always saved me the first slice."></textarea></label>
+    <label>Voice
+      <select id="tone"><option value="tender">Tender</option><option value="funny">Warm and funny</option><option value="quiet">Quiet and short</option></select></label>
+    <div class="row">
+      <button id="go" type="button">Light the candle</button>
+      <button class="ghost" id="save" type="button" disabled>Download</button>
+    </div>
+  </div>
+</div>
+
+<section class="altar" id="altar" aria-label="Your ofrenda">
+  <div class="papel" aria-hidden="true"></div>
+  <div class="tiers">
+    <div class="tier t1"><span class="flame" aria-hidden="true"></span> <strong id="aName">Their name will appear here</strong></div>
+    <div class="tier t2" id="aSongs"><small>Songs and sounds</small></div>
+    <div class="tier t3" id="aFoods"><small>Foods on the table</small></div>
+  </div>
+  <div id="out" aria-live="polite"></div>
+  <p><small>The model is told to use only the details above and to leave gaps rather than invent them. Read what it writes, and change anything that doesn’t sound like them.</small></p>
+</section>
+</main>
+<script>
+const OLLAMA = "http://localhost:11434";
+const $ = id => document.getElementById(id);
+let text = "";
+
+async function check(){
+  const s = $("status"), sel = $("model");
+  s.className = ""; s.textContent = "Looking for Ollama…";
+  try{
+    const r = await fetch(OLLAMA + "/api/tags");
+    const {models} = await r.json();
+    if(!models.length) throw new Error("none");
+    sel.innerHTML = models.map(m => `<option>${m.name}</option>`).join("");
+    const g = models.find(m => /gemma/i.test(m.name)); if(g) sel.value = g.name;
+    s.textContent = "Connected. Everything stays on this machine.";
+  }catch(e){
+    s.className = "bad";
+    s.textContent = "Can’t reach Ollama. Install it, run `ollama pull gemma3`, then start it with OLLAMA_ORIGINS set to this page’s address (see README).";
+    sel.innerHTML = "<option>no model found</option>";
+  }
+}
+
+function chips(el, label, list){
+  el.innerHTML = `<small>${label}</small><br>` + list.map(x => `<span class="chip"></span>`).join("");
+  [...el.querySelectorAll(".chip")].forEach((c,i) => c.textContent = list[i]);
+}
+const split = v => v.split(",").map(x => x.trim()).filter(Boolean);
+
+function prompt(){
+  const tones = {tender:"tender and unhurried",funny:"warm and gently funny, the way family laughs at a table",quiet:"quiet and brief, under 90 words"};
+  return [
+`You write a short remembrance of a person who has died, in the first person, as the one remembering.
+STRICT RULES:
+1. Use ONLY the facts in the user's message. Every sentence must come from something they wrote.
+2. Do NOT add: photographs, candles, altars, lighting, daily routines, things the person "always" said or did, sounds or sights not listed, or any feeling the user did not state.
+3. Fix typos and awkward grammar in the user's wording, but do not change what happened.
+4. Refer to the person by the name given. Say the relationship once.
+5. If the details are few, write FEWER sentences (3 to 6). Never pad.
+6. Tone: ${tones[$("tone").value]}. No headings, bullets or advice.`,
+`Their name: ${$("name").value}
+Who they were to me: ${$("rel").value}
+Foods: ${$("foods").value}
+Songs or sounds: ${$("songs").value}
+A memory: ${$("story").value}`];
+}
+
+async function go(){
+  if(!$("name").value.trim() || !$("story").value.trim()){
+    $("status").className = "bad"; $("status").textContent = "Add a name and one memory first."; return;
+  }
+  $("aName").textContent = $("name").value.trim();
+  chips($("aSongs"), "Songs and sounds", split($("songs").value));
+  chips($("aFoods"), "Foods on the table", split($("foods").value));
+  $("altar").classList.add("lit"); $("altar").scrollIntoView({behavior:"smooth"});
+  $("go").disabled = true; $("out").textContent = ""; text = "";
+  const [system, user] = prompt();
+  try{
+    const r = await fetch(OLLAMA + "/api/chat", {method:"POST",
+      body: JSON.stringify({model: $("model").value, stream:true, options:{temperature:.3},
+        messages:[{role:"system",content:system},{role:"user",content:user}]})});
+    const rd = r.body.getReader(), dec = new TextDecoder(); let buf = "";
+    for(;;){
+      const {done, value} = await rd.read(); if(done) break;
+      buf += dec.decode(value, {stream:true});
+      const lines = buf.split("\n"); buf = lines.pop();
+      for(const l of lines){ if(!l.trim()) continue;
+        const j = JSON.parse(l); if(j.message){ text += j.message.content; $("out").textContent = text; } }
+    }
+    $("save").disabled = !text;
+    localStorage.setItem("ofrenda:last", JSON.stringify({name:$("name").value, text}));
+  }catch(e){
+    $("status").className = "bad"; $("status").textContent = "The model didn’t answer. Is Ollama running?";
+  }
+  $("go").disabled = false;
+}
+
+function save(){
+  const blob = new Blob([`${$("name").value}\n\n${text}\n`], {type:"text/plain"});
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+  a.download = ($("name").value.trim().replace(/\W+/g,"-").toLowerCase() || "remembrance") + ".txt"; a.click();
+}
+
+$("go").onclick = go; $("save").onclick = save; $("recheck").onclick = check;
+check();
+</script>
+</body>
+</html>
