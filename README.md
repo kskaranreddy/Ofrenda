@@ -45,6 +45,7 @@ You need [Ollama](https://ollama.com) and Python (only to serve the page locally
 ## Limits
 
 - Small local models can still embellish. Early versions invented a photograph and a creaking door that nobody mentioned. The prompt now forbids this and it holds up much better, but read the result and edit anything that isn't true.
+- It can also swap a name, song or food for one it half-recognizes. In testing, a song I typed was replaced with a different one. A rule now tells it to copy these exactly, but always check them.
 - The output is only as rich as what you give it. One true sentence of detail helps more than any setting.
 - On CPU only, generation is slow (a minute or so for a short piece).
 
